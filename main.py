@@ -207,7 +207,7 @@ def edit_task():
     print(f"   Deadline: {editing_task['Deadline']}")
     print(f"   Duration: {editing_task['Duration']} hours")
     print(f"   Priority: {editing_task['Priority']}")
-    print(f"   Notes: {editing_task['notes']}")
+    print(f"   Notes: {editing_task['Notes']}")
   
     user_in = input("Choose an option: ").strip().lower()
     # Description
@@ -243,7 +243,7 @@ def edit_task():
                   print("⚠️ Invalid priority! Please enter Low, Medium, or High.")
     # Notes
     elif user_in == "5":
-       editing_task['notes'] = input("Any additional notes? ").strip()
+       editing_task['Notes'] = input("Any additional notes? ").strip()
     # Confirm
     elif user_in == "c":
       break
