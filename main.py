@@ -21,88 +21,93 @@ def init_tasks():
       tasks.append(row)
   return tasks
 
-# Save new and unique tasks to file + ID check
+# Pure save function
 def save_tasks(tasks):
-  check_exist_tasks = init_tasks()
-  check_exist_id = [int(task["ID"]) for task in check_exist_tasks]
+  with open(savfil, mode="w", newline="") as file:
+    writer = csv.writer(file)
+    writer.writerow(["ID", "Task", "Deadline", "Duration", "Status", "Priority", "Notes"])
+    for task in tasks:
+        writer.writerow([task["ID"], task["Task"], task["Deadline"], task["Duration"], task["Status"], task["Priority"], task["Notes"]])
 
 
-  
-  for task in tasks:
-    if int(task["ID"]) in check_exist_id: # check for identical IDs to existing tasks
-      #                                     Various options, Overwihte, Delete, AUTO ID.
-      print(f"\n⚠️ Task with ID {task['ID']} already exists!")
-      while True:
-        user_mcq = input("Options: (O)verwrite, (G)enerate new ID, (C)ancel: ").strip().lower()
-
-        if user_mcq == "o": # Overwrite
-          check_exist_tasks = [t for t in check_exist_tasks if int(t["ID"]) != int(task["ID"])]
-          print("✅ Task overwritten.")
-          break
-
-
-        elif user_mcq == "g" # New ID
-          new_id = max(check_exist_id) + 1 if check_exist_id else 1
-          task["ID"] = new_id
-          print(f"✅ New ID generated: {new_id}")
-          break
-
-        elif user_mcq == "c": # Cancel
-          print("❌ Task not saved.")
-          return
-
-        else:
-          print("❌ Invalid option. Please try again.")
-
-        # Save all tasks (updated or new) Inefficient as it recreates the whole file and overwrites the original. will come back and rethink this process.
-        with open(TODO_FILE, mode="w", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow(["ID", "Task", "Deadline", "Duration", "Status", "Priority", "Notes"])
-            for task in existing_tasks + [task]:  # Add new/updated task to the list
-                writer.writerow([task["ID"], task["Task"], task["Deadline"], task["Duration"], task["Status"], task["Priority"], task["Notes"]])
-
-        print("\n✅ Task saved successfully!")
-      # should add return here if i want to add future error checking and save confirmation (eg confirmation email)
-
-
-
+# Removed ID handling from user via Auto ID in add_task
 def add_task():
-  """Add a new task."""
   tasks = init_tasks()
 
-  task_desc = input("Enter the task description: ").strip()
-
   while True:
-      deadl = input("Enter the deadline (YYYY-MM-DD): ").strip()
-      try:
-          datetime.strptime(deadl, "%Y-%m-%d")
-          break
-      except ValueError:
-          print("Invalid date format. Please use YYYY-MM-DD.")
 
-  while True:
-    duration = input("Enter the duration (in hours): ").strip()
-    if duration.isdigit():
-        break
-    else:
-        print("Invalid duration. Please enter a valid number.")
+    
+    task_desc = input("Enter the task description: ").strip()
 
+    while True:
+        deadl = input("Enter the deadline (YYYY-MM-DD): ").strip()
+        try:
+            datetime.strptime(deadl, "%Y-%m-%d")
+            break
+        except ValueError:
+            print("Invalid date format. Please use YYYY-MM-DD.")
   
-  priority = input("Enter priority (Low, Medium, High): ").strip().capitalize()
-  if priority not in ["Low", "Medium", "High"]:
-      print("Invalid priority! Defaulting to 'Medium'.")
-      priority = "Medium"
+    while True:
+      duration = input("Enter the duration (in hours): ").strip()
+      if duration.isdigit():
+          break
+      else:
+          print("Invalid duration. Please enter a valid number.")
+  
+    
+    priority = input("Enter priority (Low, Medium, High): ").strip().capitalize()
+    if priority not in ["Low", "Medium", "High"]:
+        print("Invalid priority! Defaulting to 'Medium'.")
+        priority = "Medium"
+  
+    notes = input("Any additional notes? ").strip()
 
-  notes = input("Any additional notes? ").strip()
 
-  new_id = len(tasks) + 1
+  # Task Preview
+    print("\n📌 **Task Preview**")
+    print(f"   Task: {task_desc}")
+    print(f"   Deadline: {deadl}")
+    print(f"   Duration: {duration} hours")
+    print(f"   Priority: {priority}")
+    print(f"   Notes: {notes}")
+
+    user_in = input("Choose an option: ").strip().lower()
+  
+    if user_in == "t":
+        break  # Go back to task description input
+    elif user_in == "d":
+        continue  # Restart to edit deadline
+    elif user_in == "h":
+        continue  # Restart to edit duration
+    elif user_in == "p":
+        continue  # Restart to edit priority
+    elif user_in == "n":
+        continue  # Restart to edit notes
+    elif user_in == "c":
+        break  # Confirm and move forward
+    elif user_in == "x":
+        print("\n❌ Task creation cancelled.")
+        return  # Exit without saving
+    else:
+        print("❌ Invalid option! Please choose again.")
+
+  #  """ new_id = len(tasks) + 1 """ # Deleted tasks will not allow their ID to be reused with this line. new logic neeeded
+
+  #  New system works by storing all IDs as a set of ints from 1 to n + 1. this ensures all IDs that have been used before are listed with the addition of a new ID incase they are all in use. All the theoretical IDs are then subtracted against the set of used IDs. this leave an ordered list of unused IDs of which the lowest int ID is used ensuring effient use of IDs.
+  existing_ids = {int(task["ID"]) for task in tasks} if tasks else set()
+  if existing_ids:
+    all_possible_ids = set(range(1, max(existing_ids) + 2))
+    available_ids = sorted(all_possible_ids - existing_ids)
+    new_id = available_ids[0]
+  else:
+    new_id = 1
+
   tasks.append({"ID": new_id, "Task": task_desc, "Deadline": deadl, "Duration": duration, "Status": "Pending", "Priority": priority, "Notes": notes})
   save_tasks(tasks)
   print("\nTask added successfully!\n")
 
 
 def display_tasks():
-  """Show all tasks sorted by deadline."""
   tasks = sorted(init_tasks(), key=lambda x: x["Deadline"])
   if not tasks:
       print("\nNo tasks found!\n")
@@ -115,7 +120,6 @@ def display_tasks():
   print("-" * 70)
 
 def delete_task():
-  """Delete a task by ID."""
   tasks = init_tasks()
   display_tasks()
   try:
@@ -125,3 +129,91 @@ def delete_task():
       print("\nTask deleted successfully!\n")
   except ValueError:
       print("\nInvalid input! Please enter a valid task ID.\n")
+
+
+
+
+
+def mark_task_completed():
+  """Mark a task as completed."""
+  tasks = load_tasks()
+  display_tasks()
+  try:
+      task_id = int(input("Enter the task ID to mark as completed: "))
+      for task in tasks:
+          if int(task["ID"]) == task_id:
+              task["Status"] = "Completed"
+              break
+      save_tasks(tasks)
+      print("\nTask marked as completed!\n")
+  except ValueError:
+      print("\nInvalid input! Please enter a valid task ID.\n")
+
+def edit_task():
+  """Edit task details (priority, notes, etc.)."""
+  tasks = init_tasks()
+  display_tasks()
+
+  try:
+      task_id = int(input("Enter the task ID to edit: "))
+      for task in tasks:
+          if int(task["ID"]) == task_id:
+              print(f"Editing Task: {task['Task']}")
+              task["Priority"] = input(f"Enter new priority (Low, Medium, High) [{task['Priority']}]: ").strip().capitalize() or task["Priority"]
+              task["Notes"] = input(f"Enter new notes [{task['Notes']}]: ").strip() or task["Notes"]
+              save_tasks(tasks)
+              print("\nTask updated successfully!\n")
+              return
+      print("\nTask not found!\n")
+  except ValueError:
+      print("\nInvalid input! Please enter a valid task ID.\n")
+
+def show_calendar():
+  """Display tasks due in the next 7 days."""
+  tasks = init_tasks()
+  today = datetime.today()
+  upcoming_tasks = [task for task in tasks if datetime.strptime(task["Deadline"], "%Y-%m-%d") <= (today + timedelta(days=7))]
+
+  print("\n📅 Upcoming Tasks (Next 7 Days):")
+  print("-" * 70)
+  if upcoming_tasks:
+      for task in upcoming_tasks:
+          print(f"{task['ID']}. {task['Task']} | Due: {task['Deadline']} | Status: {task['Status']} | Priority: {task['Priority']} | Notes: {task['Notes']}")
+  else:
+      print("No tasks due in the next 7 days.")
+  print("-" * 70)
+
+def main():
+  """Main function to navigate through different modes."""
+  while True:
+      print("\nOptions:")
+      print("1 - View To-Do List")
+      print("2 - Add a New Task")
+      print("3 - Delete a Task")
+      print("4 - Mark Task as Completed")
+      print("5 - Edit Task")
+      print("6 - Show Calendar (Next 7 Days)")
+      print("7 - Exit")
+
+      choice = input("\nEnter your choice: ").strip()
+
+      if choice == "1":
+          display_tasks()
+      elif choice == "2":
+          add_task()
+      elif choice == "3":
+          delete_task()
+      elif choice == "4":
+          mark_task_completed()
+      elif choice == "5":
+          edit_task()
+      elif choice == "6":
+          show_calendar()
+      elif choice == "7":
+          print("\nGoodbye!")
+          break
+      else:
+          print("\nInvalid choice! Please enter a number from 1 to 7.")
+
+if __name__ == "__main__":
+  main()
