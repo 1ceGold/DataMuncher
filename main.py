@@ -21,10 +21,48 @@ def init_tasks():
       tasks.append(row)
   return tasks
 
-# Save new and unique tasks to file
+# Save new and unique tasks to file + ID check
 def save_tasks(tasks):
-    with open(savfil, mode="w", newline="") as file:
-        save_new_task = csv.writer(file)
-        save_new_task.writerow(["ID", "Task", "Deadline", "Duration", "Status", "Priority", "Notes"])
-        for task in tasks:
-          save_new_task.writerow([task["ID"], task["Task"], task["Deadline"], task["Duration"], task["Status"], task["Priority"], task["Notes"]])
+  check_exist_tasks = init_tasks()
+  check_exist_id = [int(task["ID"]) for task in check_exist_tasks]
+
+
+  
+  for task in tasks:
+    if int(task["ID"]) in check_exist_id: # check for identical IDs to existing tasks
+      #                                     Various options, Overwihte, Delete, AUTO ID.
+      print(f"\n⚠️ Task with ID {task['ID']} already exists!")
+      while True:
+        user_mcq = input("Options: (O)verwrite, (G)enerate new ID, (C)ancel: ").strip().lower()
+
+        if user_mcq == "o": # Overwrite
+          check_exist_tasks = [t for t in check_exist_tasks if int(t["ID"]) != int(task["ID"])]
+          print("✅ Task overwritten.")
+          break
+
+
+        elif user_mcq == "g" # New ID
+          new_id = max(check_exist_id) + 1 if check_exist_id else 1
+          task["ID"] = new_id
+          print(f"✅ New ID generated: {new_id}")
+          break
+
+        elif user_mcq == "c": # Cancel
+          print("❌ Task not saved.")
+          return
+
+        else:
+          print("❌ Invalid option. Please try again.")
+
+        # Save all tasks (updated or new) Inefficient as it recreates the whole file and overwrites the original. will come back and rethink this process.
+        with open(TODO_FILE, mode="w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(["ID", "Task", "Deadline", "Duration", "Status", "Priority", "Notes"])
+            for task in existing_tasks + [task]:  # Add new/updated task to the list
+                writer.writerow([task["ID"], task["Task"], task["Deadline"], task["Duration"], task["Status"], task["Priority"], task["Notes"]])
+
+        print("\n✅ Task saved successfully!")
+      # should add return here if i want to add future error checking and save confirmation (eg confirmation email)
+
+
+        
