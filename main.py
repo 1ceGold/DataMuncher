@@ -65,4 +65,63 @@ def save_tasks(tasks):
       # should add return here if i want to add future error checking and save confirmation (eg confirmation email)
 
 
-        
+
+def add_task():
+  """Add a new task."""
+  tasks = init_tasks()
+
+  task_desc = input("Enter the task description: ").strip()
+
+  while True:
+      deadl = input("Enter the deadline (YYYY-MM-DD): ").strip()
+      try:
+          datetime.strptime(deadl, "%Y-%m-%d")
+          break
+      except ValueError:
+          print("Invalid date format. Please use YYYY-MM-DD.")
+
+  while True:
+    duration = input("Enter the duration (in hours): ").strip()
+    if duration.isdigit():
+        break
+    else:
+        print("Invalid duration. Please enter a valid number.")
+
+  
+  priority = input("Enter priority (Low, Medium, High): ").strip().capitalize()
+  if priority not in ["Low", "Medium", "High"]:
+      print("Invalid priority! Defaulting to 'Medium'.")
+      priority = "Medium"
+
+  notes = input("Any additional notes? ").strip()
+
+  new_id = len(tasks) + 1
+  tasks.append({"ID": new_id, "Task": task_desc, "Deadline": deadl, "Duration": duration, "Status": "Pending", "Priority": priority, "Notes": notes})
+  save_tasks(tasks)
+  print("\nTask added successfully!\n")
+
+
+def display_tasks():
+  """Show all tasks sorted by deadline."""
+  tasks = sorted(init_tasks(), key=lambda x: x["Deadline"])
+  if not tasks:
+      print("\nNo tasks found!\n")
+      return
+
+  print("\nTo-Do List (Sorted by Deadline):")
+  print("-" * 70)
+  for task in tasks:
+      print(f"{task['ID']}. {task['Task']} | Due: {task['Deadline']} | Status: {task['Status']} | Priority: {task['Priority']} | Notes: {task['Notes']}")
+  print("-" * 70)
+
+def delete_task():
+  """Delete a task by ID."""
+  tasks = init_tasks()
+  display_tasks()
+  try:
+      task_id = int(input("Enter the task ID to delete: "))
+      tasks = [task for task in tasks if int(task["ID"]) != task_id]
+      save_tasks(tasks)
+      print("\nTask deleted successfully!\n")
+  except ValueError:
+      print("\nInvalid input! Please enter a valid task ID.\n")
