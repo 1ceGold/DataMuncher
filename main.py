@@ -31,65 +31,87 @@ def save_tasks(tasks):
 
 
 # Removed ID handling from user via Auto ID in add_task
+# Two Step system. Sequential Task Feild completion with A confirmation stage that allows specific feilds to be modified.
 def add_task():
   tasks = init_tasks()
 
+  # STAGE 1: Sequential Task Feilds
+
+  # Description
+  task_desc = input("Enter the task description: ").strip()
+
+  # Deadline
   while True:
-
-    
-    task_desc = input("Enter the task description: ").strip()
-
-    while True:
-        deadl = input("Enter the deadline (YYYY-MM-DD): ").strip()
-        try:
-            datetime.strptime(deadl, "%Y-%m-%d")
-            break
-        except ValueError:
-            print("Invalid date format. Please use YYYY-MM-DD.")
-  
-    while True:
-      duration = input("Enter the duration (in hours): ").strip()
-      if duration.isdigit():
+      deadl = input("Enter the deadline (YYYY-MM-DD): ").strip()
+      try:
+          datetime.strptime(deadl, "%Y-%m-%d")
           break
-      else:
-          print("Invalid duration. Please enter a valid number.")
-  
-    
-    priority = input("Enter priority (Low, Medium, High): ").strip().capitalize()
-    if priority not in ["Low", "Medium", "High"]:
-        print("Invalid priority! Defaulting to 'Medium'.")
-        priority = "Medium"
-  
-    notes = input("Any additional notes? ").strip()
+      except ValueError:
+          print("Invalid date format. Please use YYYY-MM-DD.")
 
-
-  # Task Preview
-    print("\n📌 **Task Preview**")
-    print(f"   Task: {task_desc}")
-    print(f"   Deadline: {deadl}")
-    print(f"   Duration: {duration} hours")
-    print(f"   Priority: {priority}")
-    print(f"   Notes: {notes}")
-
-    user_in = input("Choose an option: ").strip().lower()
-  
-    if user_in == "t":
-        break  # Go back to task description input
-    elif user_in == "d":
-        continue  # Restart to edit deadline
-    elif user_in == "h":
-        continue  # Restart to edit duration
-    elif user_in == "p":
-        continue  # Restart to edit priority
-    elif user_in == "n":
-        continue  # Restart to edit notes
-    elif user_in == "c":
-        break  # Confirm and move forward
-    elif user_in == "x":
-        print("\n❌ Task creation cancelled.")
-        return  # Exit without saving
+  # Duration
+  while True:
+    duration = input("Enter the duration (in hours): ").strip()
+    if duration.isdigit():
+        break
     else:
-        print("❌ Invalid option! Please choose again.")
+        print("Invalid duration. Please enter a valid number.")
+
+  # Priority
+  priority = input("Enter priority (Low, Medium, High): ").strip().capitalize()
+  if priority not in ["Low", "Medium", "High"]:
+      print("Invalid priority! Defaulting to 'Medium'.")
+      priority = "Medium"
+
+  # Notes
+  notes = input("Any additional notes? ").strip()
+
+
+  # STAGE 2: Confirmation Stage
+  print("\n🔹 **Task Preview & Edit Mode**")
+  print("  [1] Edit Task Description  |  [2] Edit Deadline  |  [3] Edit Duration  |  [4] Edit Priority  |  [5] Edit Notes  |  [C] Confirm & Save  |  [X] Cancel")
+
+  print("\n📌 **Task Preview**")
+  print(f"   Task: {task_desc}")
+  print(f"   Deadline: {deadl}")
+  print(f"   Duration: {duration} hours")
+  print(f"   Priority: {priority}")
+  print(f"   Notes: {notes}")
+
+  user_in = input("Choose an option: ").strip().lower()
+  
+  if user_in == "1":
+    task_desc = input("Enter the task description: ").strip()
+  elif user_in == "2":
+    while True:
+      deadl = input("Enter the deadline (YYYY-MM-DD): ").strip()
+      try:
+          datetime.strptime(deadl, "%Y-%m-%d")
+          break
+      except ValueError:
+          print("❌ Invalid date format. Please use YYYY-MM-DD.")
+  elif user_in == "3":
+    while True:
+            duration = input("Enter the duration (in hours, whole number): ").strip()
+            if duration.isdigit() and int(duration) > 0:
+                duration = int(duration)
+                break
+            else:
+                print("❌ Invalid input! Please enter a positive whole number for duration.")
+  elif user_in == "4":
+    while True:
+            priority = input("Enter priority (Low, Medium, High): ").strip().capitalize()
+            if priority in ["Low", "Medium", "High"]:
+                break
+            else:
+                print("⚠️ Invalid priority! Please enter Low, Medium, or High.")
+  elif user_in == "5":
+    notes = input("Any additional notes? ").strip()
+  elif user_in == "c":
+    break
+  elif user_in == "x":
+    print("\n❌ Task creation cancelled.")
+    return
 
   #  """ new_id = len(tasks) + 1 """ # Deleted tasks will not allow their ID to be reused with this line. new logic neeeded
 
@@ -136,7 +158,7 @@ def delete_task():
 
 def mark_task_completed():
   """Mark a task as completed."""
-  tasks = load_tasks()
+  tasks = init_tasks()
   display_tasks()
   try:
       task_id = int(input("Enter the task ID to mark as completed: "))
